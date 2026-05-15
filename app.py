@@ -3,7 +3,6 @@ from flask import Flask, jsonify, request
 
 from preprocess import preprocess_text
 
-
 MODEL_PATH = "model.pkl"
 VECTORIZER_PATH = "TfIdfVectorizer.pkl"
 ENCODER_PATH = "label_encoder.pkl"

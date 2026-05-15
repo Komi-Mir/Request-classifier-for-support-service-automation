@@ -1,28 +1,23 @@
 import streamlit as st
 import requests
 
-
 API_URL = "http://127.0.0.1:8000/predict"
 
 st.set_page_config(
-    page_title="Классификатор обращений",
-    page_icon="📨",
-    layout="centered"
+    page_title="Классификатор обращений", page_icon="📨", layout="centered"
 )
 
 st.title("Классификатор обращений в службу поддержки")
 
-st.markdown(
-    """
+st.markdown("""
     Введите текст обращения клиента.  
     Сервис определит категорию обращения и приоритет обработки.
-    """
-)
+    """)
 
 user_input = st.text_area(
     "Текст обращения:",
     height=150,
-    placeholder="Например: У меня не проходит оплата картой"
+    placeholder="Например: У меня не проходит оплата картой",
 )
 
 if st.button("Предсказать"):
@@ -30,11 +25,7 @@ if st.button("Предсказать"):
         st.warning("Введите текст обращения.")
     else:
         try:
-            response = requests.post(
-                API_URL,
-                json={"text": user_input},
-                timeout=5
-            )
+            response = requests.post(API_URL, json={"text": user_input}, timeout=5)
 
             if response.status_code == 200:
                 result = response.json()

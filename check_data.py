@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 df = pd.read_csv("correct_dataset.csv")
 
 print("Размер датасета:", df.shape)

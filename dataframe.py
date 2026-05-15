@@ -2,7 +2,6 @@ import pandas as pd
 
 from preprocess import preprocess_text
 
-
 INPUT_FILE = "dataset.csv"
 OUTPUT_FILE = "correct_dataset.csv"
 

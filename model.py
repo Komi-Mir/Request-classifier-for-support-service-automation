@@ -11,7 +11,6 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
-
 DATA_PATH = "correct_dataset.csv"
 
 MODEL_PATH = "model.pkl"
