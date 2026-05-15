@@ -1,48 +1,40 @@
-from flask import Flask, request, jsonify
 import joblib
-import re
-import nltk
-from nltk.corpus import stopwords
-import pymorphy3
+from flask import Flask, jsonify, request
 
-# Однократная загрузка ресурсов
-nltk.download('stopwords', quiet=True)
-STOP_WORDS = set(stopwords.words('russian'))
-MORPH = pymorphy3.MorphAnalyzer()
+from preprocess import preprocess_text
 
-def preprocess_text(text: str) -> str:
-    if not isinstance(text, str):
-        return ""
-    text = text.lower()
-    text = re.sub(r"[^а-яёa-z -]", "", text, flags=re.IGNORECASE)
-    words = text.split()
-    # Лемматизация без удаления стоп-слов и ограничений по длине
-    lemmas = []
-    for w in words:
-        try:
-            lemma = MORPH.parse(w)[0].normal_form
-            lemmas.append(lemma)
-        except:
-            lemmas.append(w)
-    return " ".join(lemmas)
 
-# Загрузка компонентов модели
-vectorizer = joblib.load("TfIdfVectorizer.pkl")
-model = joblib.load("model.pkl")
-encoder = joblib.load("label_encoder.pkl")
+MODEL_PATH = "model.pkl"
+VECTORIZER_PATH = "TfIdfVectorizer.pkl"
+ENCODER_PATH = "label_encoder.pkl"
 
-# Приоритет на основе категории
 PRIORITY_MAP = {
     "Оплата": "Высокий",
     "Техническая ошибка": "Высокий",
     "Доставка": "Средний",
     "Возврат и обмен": "Средний",
-    "Спам": "Низкий"
+    "Спам": "Низкий",
 }
 
 app = Flask(__name__)
 
-@app.route('/predict', methods=['POST'])
+model = joblib.load(MODEL_PATH)
+vectorizer = joblib.load(VECTORIZER_PATH)
+label_encoder = joblib.load(ENCODER_PATH)
+
+
+@app.route("/", methods=["GET"])
+def index():
+    return jsonify(
+        {
+            "service": "Support request classifier",
+            "status": "ok",
+            "endpoint": "/predict",
+        }
+    )
+
+
+@app.route("/predict", methods=["POST"])
 def predict():
     data = request.get_json(silent=True)
 
@@ -50,23 +42,28 @@ def predict():
         return jsonify({"error": "Request body must be JSON"}), 400
 
     raw_text = data.get("text", "").strip()
+
     if not raw_text:
-        return jsonify({'error': 'No text provided'}), 400
+        return jsonify({"error": "Text is empty"}), 400
 
-    try:
-        cleaned = preprocess_text(raw_text)
+    cleaned_text = preprocess_text(raw_text)
 
-        if not cleaned:
-            return jsonify({'category': 'Не определена', 'priority': 'Низкий'})
+    if not cleaned_text:
+        return jsonify({"error": "Text is empty after preprocessing"}), 400
 
-        X_input = vectorizer.transform([cleaned])
-        pred_id = model.predict(X_input)[0]
-        category = encoder.inverse_transform([pred_id])[0]
-        priority = PRIORITY_MAP.get(category, "Средний")
+    vectorized_text = vectorizer.transform([cleaned_text])
+    prediction = model.predict(vectorized_text)[0]
 
-        return jsonify({'category': category, 'priority': priority})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    category = label_encoder.inverse_transform([prediction])[0]
+    priority = PRIORITY_MAP.get(category, "Средний")
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
+    return jsonify(
+        {
+            "category": category,
+            "priority": priority,
+        }
+    )
+
+
+if __name__ == "__main__":
+    app.run(debug=True, port=8000)
