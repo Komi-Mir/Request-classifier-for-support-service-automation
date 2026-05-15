@@ -44,15 +44,17 @@ app = Flask(__name__)
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    data = request.get_json()
-    raw_text = data.get('text', '').strip()
+    data = request.get_json(silent=True)
+
+    if not data:
+        return jsonify({"error": "Request body must be JSON"}), 400
+
+    raw_text = data.get("text", "").strip()
     if not raw_text:
         return jsonify({'error': 'No text provided'}), 400
 
     try:
         cleaned = preprocess_text(raw_text)
-        print(f"RAW: {raw_text}")
-        print(f"CLEANED: {cleaned}")
 
         if not cleaned:
             return jsonify({'category': 'Не определена', 'priority': 'Низкий'})
