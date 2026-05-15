@@ -1,0 +1,8 @@
+Flask==3.0.3
+joblib==1.4.2
+scikit-learn==1.5.2
+requests==2.32.3
+streamlit==1.41.1
+pandas==2.2.2
+nltk==3.9.1
+pymorphy3==1.2.0
